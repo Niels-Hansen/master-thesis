@@ -1,0 +1,29 @@
+#!/bin/sh
+### --- specify queue ---
+
+#BSUB -q gpua100                            
+#BSUB -J yolo_train                    
+#BSUB -n 4                                 
+#BSUB -gpu "num=1:mode=exclusive_process"   
+#BSUB -W 24:00                               
+#BSUB -R "rusage[mem=10GB]"                  
+#BSUB -B                                    
+#BSUB -N                                    
+#BSUB -o yoloout_%J.out               # Output log
+#BSUB -e yoloerr_%J.err               # Error log
+
+# Load the CUDA module
+module load cuda/11.8
+
+source ../envs/pytorch/bin/activate
+
+
+pip install --upgrade pip
+pip install -r requirements.txt
+
+
+export WANDB_API_KEY=c1c447de3868cec097b64d3641c986cc8a71bcc6
+export WANDB_NAME="YOLOv11"
+export WANDB_NOTES="Smaller learning rate."
+
+python yolo_trainer.py

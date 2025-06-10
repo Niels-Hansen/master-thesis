@@ -15,7 +15,7 @@ def count_ibt_folders_and_images(base_path):
     print(f"Total images in IBT folders: {total_images_count}")
 
 if __name__ == "__main__":
-    base_path = r"G:\My Drive\MasterThesis\CroppedData"
+    base_path = r"G:\My Drive\MasterThesis\Data"
     if os.path.isdir(base_path):
         count_ibt_folders_and_images(base_path)
     else:
