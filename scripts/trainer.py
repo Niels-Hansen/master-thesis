@@ -59,7 +59,7 @@ class Trainer:
             all_fold_accuracies.append(history['val_acc'][-1])
 
             # Plot learning curves
-            plt.figure(figsize=(8, 5))
+            plt.figure(figsize=(20, 20))
             plt.plot(range(1, self.num_epochs+1), history['loss'], label='Training Loss')
             plt.plot(range(1, self.num_epochs+1), history['val_acc'], label='Validation Accuracy')
             plt.title(f"Learning Curve - Fold {fold+1}")
@@ -67,7 +67,7 @@ class Trainer:
             plt.ylabel("Metric")
             plt.legend()
             plt.tight_layout()
-            plt.savefig(f"visualizations/learning_curve_fold{fold+1}.png")
+            plt.savefig(f"visualizations/{self.model.__class__.__name__}_learning_curve_fold{fold+1}.png")
             plt.close()
 
             torch.save(self.model.state_dict(), f"{self.model.__class__.__name__}_fold{fold + 1}.pth")

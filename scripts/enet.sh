@@ -21,4 +21,4 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 
-python main.py --model efficientnet_v2_s
+python main.py --model "efficientnet_v2_s"

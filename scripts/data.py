@@ -33,19 +33,18 @@ class DataLoaderFactory:
             .astype(str)
             .str.replace(' ', '_', regex=False)   # "IBT 12085" → "IBT_12085"
         )
-
         # drop any extra rows with the same IBT_code
         df_map = df_map.drop_duplicates(subset='IBT_code', keep='first')
 
         # now it’s safe to set_index + to_dict
         self.lookup = df_map.set_index('IBT_code')[['genus','species']].to_dict(orient='index')
 
-    def prepare_data(self):
+    def prepare_data(self, model_name):
         # clean slate
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
         os.makedirs(self.temp_dir, exist_ok=True)
-        os.makedirs("visualizations", exist_ok=True)
+        os.makedirs(f"visualizations_{model_name}", exist_ok=True)
 
         random.seed(10)
         class_counts = {}
@@ -90,8 +89,10 @@ class DataLoaderFactory:
                 class_counts[class_name] = class_counts.get(class_name, 0) + 1
 
         # visualize counts
-        plt.figure(figsize=(12, 6))
+        plt.figure(figsize=(20, 20))
         items = sorted(class_counts.items(), key=lambda x: x[1], reverse=True)
+        print(f"Items before zip: {items}")
+
         classes, counts = zip(*items)
         plt.bar(range(len(classes)), counts)
         plt.xticks(range(len(classes)), classes, rotation=90)
@@ -99,7 +100,7 @@ class DataLoaderFactory:
         plt.xlabel("Class")
         plt.ylabel("Number of Images")
         plt.tight_layout()
-        plt.savefig("visualizations/class_distribution.png")
+        plt.savefig(f"visualizations_{model_name}/class_distribution.png")
         plt.close()
 
         # return an ImageFolder on the new tree

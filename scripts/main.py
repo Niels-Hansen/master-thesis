@@ -7,7 +7,7 @@ from trainer import Trainer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dry-run', action='store_true', help='Run setup without training')
-parser.add_argument('--source-dir', type=str, default="/work3/s233780/ResizedData", help='Path to source dataset')
+parser.add_argument('--source-dir', type=str, default="/work3/s233780/ResizedDataFixed", help='Path to source dataset')
 parser.add_argument('--k-folds', type=int, default=5, help='Number of folds for cross-validation')
 parser.add_argument('--model-name', type=str, default="efficientnet_v2_s", help='Name of the model to use (e.g., efficientnet_v2_s, vit_b_16, resnext101_32x8d)')
 
@@ -18,11 +18,11 @@ model_name = args.model_name
 source_dir = args.source_dir
 num_epochs = 10
 k_folds = args.k_folds
-mapping_file = 'DataDescription.xlsx'  # Path to the mapping file
+mapping_file = 'imageAnalysis_info.xlsx'  # Path to the mapping file
 temp_dir='../tempdata/kfold'
 
 data_loader_factory = DataLoaderFactory(source_dir,mapping_file,temp_dir)
-full_dataset = data_loader_factory.prepare_data()
+full_dataset = data_loader_factory.prepare_data(args.model_name)
 
 print("Dataset classes:", full_dataset.classes)
 
