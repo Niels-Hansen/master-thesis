@@ -25,7 +25,7 @@ def process_folder(input_folder):
     )
 
     images_per_day = 48
-    if len(image_files) < images_per_day:
+    if len(image_files) < 2*images_per_day:
         print(f"Skipping folder {input_folder}, not enough images.")
         return
 
