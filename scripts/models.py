@@ -10,13 +10,24 @@ class ModelFactory:
     def get_model(self, model_name):
             if model_name == "efficientnet_v2_s":
                 model = efficientnet_v2_s(weights="DEFAULT")
-                model.classifier[1] = nn.Linear(model.classifier[1].in_features, self.num_classes)
+                model.classifier = nn.Sequential(
+                    nn.Dropout(0.2),
+                    nn.Linear(model.classifier[1].in_features, self.num_classes)
+                )
+                #model.classifier[1] = nn.Linear(model.classifier[1].in_features, self.num_classes)
             elif model_name == "vit_b_16":
                 model = vit_b_16(weights="DEFAULT")
-                model.heads.head = nn.Linear(model.heads.head.in_features, self.num_classes)
+                model.heads = nn.Sequential(
+                    nn.Dropout(0.2),
+                    nn.Linear(model.heads.head.in_features, self.num_classes)
+                )
             elif model_name == "resnext101_32x8d":
                 model = resnext101_32x8d(weights="DEFAULT")
-                model.fc = nn.Linear(model.fc.in_features, self.num_classes)
+                model.fc = nn.Sequential(
+                    nn.Dropout(0.2),
+                    nn.Linear(model.fc.in_features, self.num_classes)
+                )
+                #model.fc = nn.Linear(model.fc.in_features, self.num_classes)
             else:
                 raise ValueError(f"Model {model_name} is not supported.")
 

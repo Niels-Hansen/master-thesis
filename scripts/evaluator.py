@@ -1,168 +1,128 @@
-import torch
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import matplotlib.pyplot as plt
-import seaborn as sns # Import seaborn for better heatmaps
-import numpy as np # Import numpy for array operations
 import os
-import re # Import regex for parsing species from class names
-from torchvision import transforms # Needed for image denormalization
+import pandas as pd
+import torch
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
+from utils import Utils
 
 class Evaluator:
-    def __init__(self, device):
-        self.device = device
-        os.makedirs("visualizations", exist_ok=True)
-
-    def _plot_confusion_matrix(self, cm, class_names_to_plot, model_name, fold, epoch, fig_name_suffix=""):
-        """
-        Helper to plot and save a confusion matrix using Seaborn.
-        Adjusts figure size and font size for readability with many classes.
-        """
-        num_classes_to_plot = len(class_names_to_plot) # Use the specific class_names list for this plot
+    """
+    Evaluator handles model inference, metric computation, report saving,
+    and delegates visualization to VisualizationUtils.
+    """
+    def __init__(self, model, device, criterion, class_names, utils, logs_dir="logs"):
+        self.model       = model
+        self.device      = device
+        self.criterion   = criterion
+        self.class_names = class_names
+        self.utils         = utils
+        self.logs_dir    = logs_dir
+        os.makedirs(self.logs_dir, exist_ok=True)
         
-        fig_size_base = 10
-        scaling_factor = 0.25
-        fig_size = max(fig_size_base, num_classes_to_plot * scaling_factor)
+    @staticmethod
+    def get_media_from_path(path: str) -> str:
+        stem = os.path.splitext(os.path.basename(path))[0]
+        return stem.split('_')[-2] 
+    
+    def evaluate(self, loader, model_name="model", fold=1, epoch=1):
+        # Switch to eval mode
+        self.model.eval()
         
-        plt.figure(figsize=(fig_size, fig_size))
-        
-        sns.heatmap(cm, annot=False, fmt="d", cmap="viridis", cbar=True,
-                    xticklabels=class_names_to_plot, yticklabels=class_names_to_plot, # Use specific class_names
-                    linewidths=.5, linecolor='lightgrey')
-        
-        plt.title(f"Confusion Matrix - {model_name} Fold {fold} Epoch {epoch} {fig_name_suffix}")
-        plt.ylabel("True label")
-        plt.xlabel("Predicted label")
-        
-        tick_font_size = max(2, 10 - num_classes_to_plot // 15)
-        plt.xticks(rotation=90, ha='right', fontsize=tick_font_size)
-        plt.yticks(rotation=0, fontsize=tick_font_size)
-        
-        plt.tight_layout()
-        
-        model_viz_dir = os.path.join("visualizations", model_name)
-        os.makedirs(model_viz_dir, exist_ok=True)
-        
-        plt.savefig(os.path.join(model_viz_dir, f"confusion_matrix_{model_name}_fold{fold}_epoch{epoch}{fig_name_suffix}.png"))
-        plt.close()
-
-    def _plot_misclassified_examples(self, model, loader, class_names, model_name, fold, epoch, num_examples=5):
-        """Plots a few misclassified examples, showing true vs predicted labels."""
-        model.eval()
-        misclassified_images = []
-        misclassified_preds = []
-        misclassified_labels = []
-
-        with torch.no_grad():
-            for inputs, labels in loader:
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-                outputs = model(inputs)
-                preds = torch.argmax(outputs, dim=1)
-
-                incorrect_indices = (preds != labels).nonzero(as_tuple=True)[0]
-                
-                for idx in incorrect_indices:
-                    if len(misclassified_images) < num_examples:
-                        misclassified_images.append(inputs[idx].cpu())
-                        misclassified_preds.append(preds[idx].item())
-                        misclassified_labels.append(labels[idx].item())
-                    else:
-                        break
-                if len(misclassified_images) >= num_examples:
-                    break
-
-        if misclassified_images:
-            fig, axes = plt.subplots(1, len(misclassified_images), figsize=(4 * len(misclassified_images), 4))
-            
-            if len(misclassified_images) == 1:
-                axes = [axes]
-            
-            mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
-            std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
-
-            for i, ax in enumerate(axes):
-                img_tensor = misclassified_images[i]
-                img_tensor = img_tensor * std + mean
-                img_tensor = torch.clamp(img_tensor, 0, 1)
-                img_pil = transforms.ToPILImage()(img_tensor)
-                
-                ax.imshow(img_pil)
-                ax.set_title(f"True: {class_names[misclassified_labels[i]]}\nPred: {class_names[misclassified_preds[i]]}",
-                             color='red', fontsize=8)
-                ax.axis('off')
-
-            plt.suptitle(f"Misclassified Examples - {model_name} Fold {fold} Epoch {epoch}", fontsize=10)
-            plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-            
-            model_viz_dir = os.path.join("visualizations", model_name)
-            os.makedirs(model_viz_dir, exist_ok=True)
-            
-            plt.savefig(os.path.join(model_viz_dir, f"misclassified_examples_{model_name}_fold{fold}_epoch{epoch}.png"))
-            plt.close()
+        ds = loader.dataset
+        if hasattr(ds, "dataset") and hasattr(ds, "indices"):
+            base, idx = ds.dataset, ds.indices
         else:
-            print(f"  No misclassified examples found for {model_name} in Fold {fold} Epoch {epoch} to plot.")
+            base, idx = ds, range(len(ds.samples))
+        all_paths = [base.samples[i][0] for i in idx]
 
-
-    def evaluate(self, model, loader, full_class_names, model_name="", fold=0, epoch=0):
-        """
-        Evaluates the model and generates various plots.
-        Generates two confusion matrices: one for combined labels and one for species-level.
-        """
-        model.eval()
-        all_preds_idx, all_labels_idx = [], []
+        all_preds = []
+        all_labels = []
+        total_loss = 0.0
+        total_correct = 0
+        total_samples = 0
 
         with torch.no_grad():
             for inputs, labels in loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
-                outputs = model(inputs)
-                preds = torch.argmax(outputs, dim=1)
+                outputs = self.model(inputs)
+                loss = self.criterion(outputs, labels)
+
+                preds = outputs.argmax(dim=1)
+                total_loss += loss.item() * labels.size(0)
+                total_correct += (preds == labels).sum().item()
+                total_samples += labels.size(0)
+
+                all_preds.extend(preds.cpu().tolist())
+                all_labels.extend(labels.cpu().tolist())
                 
-                all_preds_idx.extend(preds.cpu().numpy())
-                all_labels_idx.extend(labels.cpu().numpy())
-
-        # --- Overall Accuracy and Classification Report (on combined classes) ---
-        acc = accuracy_score(all_labels_idx, all_preds_idx)
-        # Use full_class_names for target_names and all possible labels (0 to num_classes-1)
-        report = classification_report(
-            all_labels_idx,
-            all_preds_idx,
-            labels=range(len(full_class_names)), # <-- Pass all possible label indices
-            target_names=full_class_names,       # <-- Pass all class names
-            zero_division=0
+        df_media = pd.DataFrame({
+            'true': all_labels,
+            'pred': all_preds,
+            'media': [self.get_media_from_path(p) for p in all_paths]
+        })
+        df_media['true_class'] = df_media['true'].apply(lambda x: self.class_names[x])
+        df_media['pred_class'] = df_media['pred'].apply(lambda x: self.class_names[x])
+        df_media.to_csv(
+            os.path.join(self.logs_dir, f"{model_name}_fold{fold}_epoch{epoch}_media_predictions.csv"),
+            index=False
         )
-        
+         # build media‐level summary
+        summary = []
+        for media, sub in df_media.groupby('media'):
+            acc  = accuracy_score(sub['true'], sub['pred'])
+            m_f1 = f1_score(sub['true'], sub['pred'], average='macro')
+            summary.append({
+                'media': media,
+                'n_samples': len(sub),
+                'accuracy': acc,
+                'macro_f1': m_f1
+            })
+            print(f"--- {media} ({len(sub)} samples) ---")
+            print(f"Accuracy: {acc:.4f}, Macro-F1: {m_f1:.4f}\n")
 
-        # --- Plot Combined Species_Media Confusion Matrix ---
-        # Compute confusion matrix with all possible labels
-        cm_combined = confusion_matrix(all_labels_idx, all_preds_idx, labels=range(len(full_class_names)))
-        self._plot_confusion_matrix(cm_combined, full_class_names, model_name, fold, epoch, fig_name_suffix="_combined")
+        # save media summary to CSV
+        summary_df = pd.DataFrame(summary).sort_values('accuracy', ascending=False)
+        media_csv = os.path.join(
+            self.logs_dir,
+            f"{model_name}_fold{fold}_epoch{epoch}_media_summary.csv"
+        )
+        summary_df.to_csv(media_csv, index=False)
+        print(f"Saved media summary to {media_csv}")
+            
+        # Compute averaged metrics
+        avg_val_loss = total_loss / total_samples
+        accuracy = total_correct / total_samples
 
+        # Classification report 
+        report_dict = classification_report(
+            all_labels,
+            all_preds,
+            labels=range(len(self.class_names)),
+            target_names=self.class_names,
+            zero_division=0,
+            output_dict=True
+        )
+        # Save report to CSV
+        df_report = pd.DataFrame(report_dict).transpose()
+        report_fname = f"{model_name}_fold{fold}_epoch{epoch}_report.csv"
+        df_report.to_csv(os.path.join(self.logs_dir, report_fname), index=True)
 
-        # --- Plot Species-Level Confusion Matrix (Recommended for Readability) ---
-        # 1. Map combined class indices to species-only names/indices
-        species_names_raw_mapped = []
-        for class_name in full_class_names:
-            # Regex to capture "Genus _species" from names like "Penicillago _kabunica_YES"
-            # Updated regex: captures everything before the last underscore if it's followed by letters (media)
-            match = re.match(r'(.+)_[A-Za-z]+$', class_name) 
-            if match:
-                species_names_raw_mapped.append(match.group(1)) # This gets "Penicillago _kabunica"
-            else:
-                # Fallback for names like "single plate data" or if format doesn't match
-                species_names_raw_mapped.append(class_name) 
-                print(f"Warning: Class name '{class_name}' did not match expected pattern for species mapping. Using full name as fallback for species level CM.")
+        # Confusion matrix (combined)
+        cm = confusion_matrix(all_labels, all_preds, labels=range(len(self.class_names)))
+        self.utils.plot_confusion_matrix(cm, self.class_names, model_name, fold, epoch)
 
-        species_names_unique = sorted(list(set(species_names_raw_mapped)))
-        species_to_idx_map = {name: i for i, name in enumerate(species_names_unique)}
+        # Species-level confusion
+        self.utils.plot_species_confusion_matrix(cm, self.class_names, model_name, fold, epoch)
 
-        species_labels_mapped = [species_to_idx_map[species_names_raw_mapped[label_idx]] for label_idx in all_labels_idx]
-        species_preds_mapped = [species_to_idx_map[species_names_raw_mapped[pred_idx]] for pred_idx in all_preds_idx]
+        # Misclassified examples
+        self.utils.plot_misclassified_examples(
+            self.model,
+            loader,
+            self.class_names,
+            model_name,
+            fold,
+            epoch,
+            device=self.device
+        )
 
-        # 2. Compute species-level confusion matrix
-        # Compute confusion matrix with all possible species-level labels
-        cm_species = confusion_matrix(species_labels_mapped, species_preds_mapped, labels=range(len(species_names_unique)))
-        self._plot_confusion_matrix(cm_species, species_names_unique, model_name, fold, epoch, fig_name_suffix="_species_level")
-
-        # --- Plot Misclassified Examples ---
-        self._plot_misclassified_examples(model, loader, full_class_names, model_name, fold, epoch)
-
-        return acc, report
+        # Return summary metrics
+        return avg_val_loss, accuracy, report_dict, df_media, summary_df

@@ -17,13 +17,29 @@ class DataLoaderFactory:
         self.source_dir  = source_dir
         self.mapping_file = mapping_file
         self.temp_dir     = temp_dir
-        self.data_transforms = transforms.Compose([
+    
+        self.train_transforms = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.RandomRotation(degrees=20),
+            transforms.ColorJitter(brightness=0.2,
+                                   contrast=0.2,
+                                   saturation=0.2,
+                                   hue=0.1),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
+        ])
+        self.val_transforms = transforms.Compose([
             transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std =[0.229, 0.224, 0.225])
+            transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
         ])
+        
+        
+        """
         # build IBT→(genus,species) lookup once
         df_map = pd.read_excel(self.mapping_file)
 
@@ -37,9 +53,28 @@ class DataLoaderFactory:
         df_map = df_map.drop_duplicates(subset='IBT_code', keep='first')
 
         # now it’s safe to set_index + to_dict
+        
         self.lookup = df_map.set_index('IBT_code')[['genus','species']].to_dict(orient='index')
+        """
+        df = pd.read_excel(self.mapping_file)
+        df['IBT_code'] = df['IBT number'].astype(str).str.replace(' ', '_', regex=False)
+
+        df['genus'] = df['genus'].astype(str).str.strip().str.replace('"', '')
+        df['species'] = df['species'].astype(str).str.strip().str.replace('"', '')
+
+        self.lookup = df.set_index('IBT_code').apply(
+            lambda row: (
+                f"{str(row['genus']).strip()}" if pd.isna(row['species']) or str(row['species']).strip().lower() in ['nan', '']
+                else f"{str(row['genus']).strip()}_{str(row['species']).strip()}"
+            ) if not pd.isna(row['genus']) and str(row['genus']).strip().lower() not in ['nan', '']
+            else '',
+            axis=1
+        ).to_dict()
+        print(f"Lookup table created with {len(self.lookup)} entries.")
 
     def prepare_data(self, model_name):
+        print(f"--- Starting data preparation for model: {model_name} ---")
+
         # clean slate
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
@@ -48,6 +83,7 @@ class DataLoaderFactory:
 
         random.seed(10)
         class_counts = {}
+        print(f"Found {len(self.source_dir)} total items to process.")
 
         # walk source_dir
         for folder in os.listdir(self.source_dir):
@@ -68,17 +104,23 @@ class DataLoaderFactory:
                 if ibt_code not in self.lookup:
                     print(f"No mapping for {ibt_code}, skipping {img}")
                     continue
-                media    = m.group(2).upper()    # e.g. "MEA"
+                # media    = m.group(2).upper()    # e.g. "MEA"
 
                 # lookup genus/species
                 if ibt_code not in self.lookup:
                     print(f"No mapping for {ibt_code}, skipping {img}")
                     continue
-                genus   = self.lookup[ibt_code]['genus']
-                species = self.lookup[ibt_code]['species']
+                # genus   = self.lookup[ibt_code]['genus']
+                # species = self.lookup[ibt_code]['species']
+            
 
                 # new class folder
-                class_name = f"{genus}_{species}_{media}"
+                #class_name = f"{genus}_{species}"
+                class_name = self.lookup[ibt_code]
+                if not class_name or class_name[0] == '':
+                    print(f"Skipping {img}: empty class name.")
+                    continue
+                
                 dest_dir   = os.path.join(self.temp_dir, class_name)
                 os.makedirs(dest_dir, exist_ok=True)
 
@@ -92,8 +134,9 @@ class DataLoaderFactory:
         plt.figure(figsize=(20, 20))
         items = sorted(class_counts.items(), key=lambda x: x[1], reverse=True)
         print(f"Items before zip: {items}")
-
+        
         classes, counts = zip(*items)
+        print(f"Classes: {len(classes)}")
         plt.bar(range(len(classes)), counts)
         plt.xticks(range(len(classes)), classes, rotation=90)
         plt.title("Class Distribution (genus_species_media)")
@@ -105,6 +148,8 @@ class DataLoaderFactory:
 
         # return an ImageFolder on the new tree
           # Create dataset object
-        dataset = datasets.ImageFolder(self.temp_dir, transform=self.data_transforms)
-        dataset.classes = classes
-        return dataset
+        #dataset = datasets.ImageFolder(self.temp_dir, transform=self.data_transforms)
+        #dataset.classes = classes
+        print("--- Data preparation complete. Returning dataset. ---")
+
+        return self.temp_dir
