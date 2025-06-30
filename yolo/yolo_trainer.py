@@ -58,7 +58,7 @@ class DataSplitter:
                 
                 genus = self.lookup[ibt]['genus']
                 species = self.lookup[ibt]['species']
-                class_name = f"{genus}_{species}_{media}"
+                class_name = f"{genus}_{species}"
 
                 # Decide if this image goes to train or val
                 destination_base = self.train_dir if random.random() < split_ratio else self.val_dir
@@ -79,9 +79,10 @@ class DataSplitter:
 
 if __name__ == '__main__':
 
-    source_images_dir = "/work3/s233780/ResizedData"
-    mapping_file = "DataDescription.xlsx"
-    output_dataset_dir = "fungi_dataset"
+    source_images_dir = "/work3/s233780/CircularMaskedData"
+    #source_images_dir = r"G:\My Drive\MasterThesisTest\ResizedData"
+    mapping_file = "imageAnalysis_info.xlsx"
+    output_dataset_dir = "../fungi_dataset"
 
     try:
         splitter = DataSplitter(source_images_dir, mapping_file, output_dataset_dir)
@@ -100,36 +101,68 @@ if __name__ == '__main__':
             pretrained=True,
             epochs=20, 
             imgsz=224,
-            batch=64,
-            lr0=0.01, 
+            batch=128,
+            lr0=0.001, 
+            flipud=0.5,
+            fliplr=0.5,
+            degrees=20.0,
+            hsv_v=0.2,
+            hsv_s=0.2,
+            hsv_h=0.1,
+            optimizer='adam',
             project='runs/basic_training',
             name='yolo11n_fungi',
             plots=True,
             save=True,
-            device='0',
+            save_period=2,
+            device='0', # 0 for GPU, 'cpu' for CPU
         )
         print("Model training complete.")
 
         res = results[0] if isinstance(results, list) else results
         epoch = getattr(res, 'epoch', getattr(res, 'epochs', None))
-        metrics = getattr(res, 'metrics', {})
-
-        row = {'timestamp': pd.Timestamp.now(), 'epoch': epoch, **metrics}
-        df  = pd.DataFrame([row])
-        out = "train_metrics.csv"
-        df.to_csv(out, index=False, mode='a', header=not os.path.exists(out))
-        print(f"Saved training metrics to {out}")
-
+        train_metrics = getattr(res, 'results_dict', {})
+        print(f"Training metrics: {train_metrics}")
         print("\nRunning final validation…")
-        valm = model.val()
-        print(f"Final validation Top-1 = {valm.top1}")
-
+        valm = model.val(save_json=True,
+                         imgsz=224,
+                         batch=64,
+                         plots=True,
+                         name='yolo11n_fungi_val',
+                         project='runs/basic_validation',
+                         save_txt=True,
+                         save_conf=True,
+                         )
+        
+        val_top1    = getattr(valm, 'top1', None)
+        val_top5    = getattr(valm, 'top5', None)
+        val_fitness = getattr(valm, 'fitness', None)
+        row = {
+            'timestamp': pd.Timestamp.now(),
+            'epoch':     epoch,
+            # training
+            'train_top1':       train_metrics.get('metrics/accuracy_top1'),
+            'train_top5':       train_metrics.get('metrics/accuracy_top5'),
+            'train_fitness':    train_metrics.get('fitness'),
+            # validations
+            'val_top1':         val_top1,
+            'val_top5':         val_top5,
+            'val_fitness':      val_fitness,       
+        }
+        out = "train_metrics.csv"
+        pd.DataFrame([row]).to_csv(
+            out,
+            index=False,
+            mode='a',
+            header=not os.path.exists(out)
+        )
+        print(f"Final validation Top-1 = {valm.top1}")        
         config = {
             'epochs':20, 'imgsz':224, 'batch':64,
             'train_dir': output_dataset_dir
         }
         wandb.init(project="yolo-trials", config=config)
-        wandb.log({'train_epoch': epoch, **metrics,
+        wandb.log({'train_epoch': epoch, **train_metrics,
                    'val_top1': getattr(valm, 'top1', None)})
         
     except Exception as e:
