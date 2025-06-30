@@ -5,12 +5,14 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, Subset
 from sklearn.model_selection import StratifiedKFold
 import matplotlib.pyplot as plt
+from torchvision.datasets import ImageFolder
 import time
 import csv
 import pandas as pd
 import os
 from utils import Utils
 import re
+
 
 class Trainer:
     def __init__(self, model_factory, evaluator, device, num_epochs, train_transform, val_transform):
@@ -22,6 +24,7 @@ class Trainer:
         self.train_transform = train_transform
         self.val_transform   = val_transform
         os.makedirs("logs", exist_ok=True)
+        self.logs_dir = "logs/cv"
         # Epoch-level metrics:
         self.metrics_file = "logs/metrics.csv"
         with open(self.metrics_file, "w", newline="") as f:
@@ -38,36 +41,37 @@ class Trainer:
     def train(self, full_dataset, k_folds, model_name):
         #kf = KFold(n_splits=k_folds, shuffle=True, random_state=42)
         labels = [label for _, label in full_dataset.imgs]  # For stratification
-        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
-        
-        
-        
-        start_time = time.time()
+        skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=10)
 
+    
+        start_time = time.time()
+        all_true = []
+        all_pred = []
         all_fold_accuracies = []
         for fold, (train_idx, val_idx) in enumerate(skf.split(full_dataset,labels)):
             print(f"Fold {fold + 1}/{k_folds}")
             model = self.model_factory.get_model(model_name).to(self.device) # Move model to the appropriate device
 
             criterion = nn.CrossEntropyLoss()
-            optimizer = optim.Adam(model.parameters(), lr=0.002)
-            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
-            # Create DataLoaders for the current fold
-            #train_loader = DataLoader(Subset(full_dataset, train_idx), batch_size=64, shuffle=True)
-            #val_loader = DataLoader(Subset(full_dataset, val_idx), batch_size=64, shuffle=False)
-            #full_dataset.transform = full_dataset.loader_factory.train_transforms
-            full_dataset.transform = self.train_transform
-            train_loader = DataLoader(
-                Subset(full_dataset, train_idx),
-                batch_size=32,
-                shuffle=True,
+            optimizer = optim.Adam(model.parameters(), lr=0.001)  # Use Adam optimizer with weight decay
+            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1) 
+                       
+            train_ds = Subset(
+                ImageFolder(full_dataset.root, transform=self.train_transform),
+                train_idx
             )
-            #full_dataset.transform = full_dataset.loader_factory.val_transforms
-            full_dataset.transform = self.val_transform
+            train_loader = DataLoader(
+                train_ds, batch_size=128, shuffle=True,
+                num_workers=4, pin_memory=True, persistent_workers=True
+            )
+
+            val_ds = Subset(
+                ImageFolder(full_dataset.root, transform=self.val_transform),
+                val_idx
+            )
             val_loader = DataLoader(
-                Subset(full_dataset, val_idx),
-                batch_size=32,
-                shuffle=False,
+                val_ds, batch_size=128, shuffle=False,
+                num_workers=4, pin_memory=True, persistent_workers=True
             )
 
             self.evaluator.model     = model
@@ -80,7 +84,7 @@ class Trainer:
                 print(f"  Epoch {epoch + 1}/{self.num_epochs}")
                 model.train()
                 running_loss = 0.0
-                
+                running_correct = 0
                 for inputs, labels in train_loader:
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
                     optimizer.zero_grad()
@@ -89,6 +93,8 @@ class Trainer:
                     loss.backward()
                     optimizer.step()
                     running_loss += loss.item()
+                    running_correct += (outputs.argmax(1) == labels.to(self.device)).sum().item()
+                    
                 scheduler.step()  # Step the learning rate scheduler
 
                 avg_loss = running_loss / len(train_loader)
@@ -99,12 +105,11 @@ class Trainer:
                     fold=fold+1,
                     epoch=epoch+1
                 )
+                
+                all_true.extend(df_media['true'].tolist())
+                all_pred.extend(df_media['pred'].tolist())
 
-                correct = sum(
-                    (model(inputs.to(self.device)).argmax(1) == labels.to(self.device)).sum().item()
-                    for inputs, labels in train_loader
-                )
-                train_acc = correct / len(train_loader.dataset)
+                train_acc = running_correct / len(train_loader.dataset)
                 history['train_acc'].append(train_acc)
                 history['train_loss'].append(avg_loss)
                 history['val_acc'].append(val_acc)
@@ -141,6 +146,18 @@ class Trainer:
                 df = df[["Model","Fold","Epoch","Class","Precision","Recall","F1-Score","Support"]]
                 
                 df.to_csv(self.classif_file, mode="a", header=False, index=False)
+                # Save model checkpoint for each epoch
+                epoch_dir = f"/work3/s233780/checkpoints_{model_name}"
+                os.makedirs(epoch_dir, exist_ok=True)
+                # Save model state dict
+                torch.save(
+                    model.state_dict(),
+                    os.path.join(
+                        epoch_dir,
+                        f"{model_name}_fold{fold+1}_epoch{epoch+1}.pt"
+                    )
+               )
+                
             checkpoint_dir = f"checkpoints_{model_name}"
             os.makedirs(checkpoint_dir, exist_ok=True)
             torch.save(
@@ -153,7 +170,12 @@ class Trainer:
                 model_name,
                 fold + 1
             )
-                
+            self.utils.cross_val_report(
+                all_true,
+                all_pred,
+                self.evaluator.class_names,
+                self.logs_dir
+            )
 
             # Record final val accuracy for the fold
             all_fold_accuracies.append(history['val_acc'][-1])

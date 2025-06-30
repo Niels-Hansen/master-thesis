@@ -9,18 +9,13 @@ import torchvision.datasets as datasets
 
 class DataLoaderFactory:
     def __init__(self, source_dir, mapping_file, temp_dir):
-        """
-        source_dir   – root folder where subfolders are your raw IBT_* folders
-        mapping_file – path to .xlsx that has columns ['IBT number','genus','species']
-        temp_dir     – where to build the new class-structured tree
-        """
+        
         self.source_dir  = source_dir
         self.mapping_file = mapping_file
         self.temp_dir     = temp_dir
     
         self.train_transforms = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
+            transforms.Resize((224, 224)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.RandomRotation(degrees=20),
@@ -32,30 +27,11 @@ class DataLoaderFactory:
             transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
         ])
         self.val_transforms = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
+            transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
         ])
         
-        
-        """
-        # build IBT→(genus,species) lookup once
-        df_map = pd.read_excel(self.mapping_file)
-
-        # normalize code
-        df_map['IBT_code'] = (
-            df_map['IBT number']
-            .astype(str)
-            .str.replace(' ', '_', regex=False)   # "IBT 12085" → "IBT_12085"
-        )
-        # drop any extra rows with the same IBT_code
-        df_map = df_map.drop_duplicates(subset='IBT_code', keep='first')
-
-        # now it’s safe to set_index + to_dict
-        
-        self.lookup = df_map.set_index('IBT_code')[['genus','species']].to_dict(orient='index')
-        """
         df = pd.read_excel(self.mapping_file)
         df['IBT_code'] = df['IBT number'].astype(str).str.replace(' ', '_', regex=False)
 
