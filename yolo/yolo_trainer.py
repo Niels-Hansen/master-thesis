@@ -70,8 +70,7 @@ class DataSplitter:
                 shutil.copy(source_file_path, destination_file_path)
 
         print("Data preparation complete")
-        print(f"Train data: {self.train_dir}")
-        print(f"Validation data: {self.val_dir}")
+   
 
 
 if __name__ == '__main__':

@@ -69,8 +69,9 @@ class DatasetSummary:
             "unmatched_images": unmatched_images,
             "summary_file": output_csv
         }
+        
 summary = DatasetSummary(
-root_dir=r"G:\My Drive\MasterThesis\ResizedDataFixed",
+root_dir=r"G:\My Drive\MasterThesis\CircularMaskedDataSorted\300min",
 mapping_file=r"G:\My Drive\MasterThesis\imageAnalysis_info.xlsx"
 )
-stats = summary.summarize(output_csv="class_summary.csv")
+stats = summary.summarize(output_csv="class_summary300.csv")

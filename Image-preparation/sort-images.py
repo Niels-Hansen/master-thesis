@@ -4,28 +4,22 @@ import re
 import shutil
 from natsort import natsorted
 
-# CONFIG
 input_base  = r"G:\My Drive\MasterThesis\CircularMaskedData"
-output_base = r"G:\My Drive\MasterThesis\CircularMaskedDataSorted"
+output_base = r"G:\My Drive\MasterThesis\CircularMaskedDataSorted2"
 
-# Intervals in minutes you want to sample “every N minutes”
 intervals = [60, 120, 300, 720]
 
-# Regex to extract the number before “min” in each filename
 ts_re = re.compile(r'_(\d+)min\.')
 
 def find_closest(keys, target):
-    """Return the key in `keys` closest to `target`."""
     return min(keys, key=lambda k: abs(k - target))
 
 def process_ibt(ibt_folder, ibt_name):
-    # gather and sort all timestamped images
     files = natsorted(f for f in os.listdir(ibt_folder) if ts_re.search(f))
     if not files:
         print(f"No timestamped images in {ibt_folder}, skipping.")
         return
 
-    # map timestamp → list of filenames
     ts_map = {}
     for fn in files:
         t = int(ts_re.search(fn).group(1))
