@@ -1,0 +1,7 @@
+media,n_samples,accuracy,macro_f1
+CREA,1362,1.0,1.0
+CYA,1370,1.0,1.0
+MEAox,1361,1.0,1.0
+OAT,1339,1.0,1.0
+PDA,1362,1.0,1.0
+YES,1309,1.0,1.0

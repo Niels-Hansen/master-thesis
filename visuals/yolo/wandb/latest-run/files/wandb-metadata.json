@@ -1,0 +1,12 @@
+{
+  "os": "Linux-6.1.140-1.el9.elrepo.x86_64-x86_64-with-glibc2.34",
+  "python": "CPython 3.9.21",
+  "startedAt": "2025-06-11T08:39:33.574672Z",
+  "program": "/zhome/74/3/204058/yolo/yolo_trainer.py",
+  "codePath": "yolo_trainer.py",
+  "email": "nielshansen98@gmail.com",
+  "root": "/zhome/74/3/204058/yolo",
+  "host": "n-62-12-20",
+  "executable": "/zhome/74/3/204058/envs/pytorch/bin/python",
+  "codePathLocal": "yolo_trainer.py"
+}

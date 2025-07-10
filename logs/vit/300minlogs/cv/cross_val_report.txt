@@ -1,0 +1,133 @@
+=== Cross-validated Confusion Matrix ===
+[[  3   0   0 ...   0   0   0]
+ [  0 191   0 ...   0   0   0]
+ [  0   0   0 ...   0   0   0]
+ ...
+ [  0   0   0 ...  27   2   2]
+ [  0   0   0 ...   0  33   8]
+ [  0   0   0 ...   0   4 146]]
+
+=== Cross-validated Classification Report ===
+                               precision    recall  f1-score   support
+
+                   Acremonium       0.08      0.01      0.01       600
+        Acremonium_alternatum       0.21      0.32      0.25       600
+          Acremonium_strictum       0.00      0.00      0.00       600
+                   Alternaria       0.33      0.03      0.05       600
+      Arthrinium_phaeospermum       0.30      0.23      0.26       600
+           Ascospirella_lutea       0.05      0.00      0.00       600
+                  Aspergillus       0.04      0.00      0.00       600
+      Aspergillus_aculeatinus       0.30      0.13      0.19       550
+     Aspergillus_arachidicola       0.26      0.10      0.14       600
+      Aspergillus_calidoustus       0.09      0.00      0.01       600
+           Aspergillus_creber       0.37      0.05      0.09       600
+           Aspergillus_flavus       0.15      0.45      0.23      1180
+         Aspergillus_lentulus       0.07      0.00      0.00       500
+Aspergillus_minisclerotigenes       0.04      0.00      0.01       600
+    Aspergillus_montevidensis       0.16      0.01      0.03       600
+        Aspergillus_neoglaber       0.20      0.01      0.02       600
+           Aspergillus_nomiae       0.32      0.19      0.24       600
+         Aspergillus_occultus       0.00      0.00      0.00       600
+     Aspergillus_pseudonomiae       0.06      0.00      0.00       600
+         Aspergillus_puniceus       0.24      0.10      0.14       600
+    Aspergillus_thermomutatus       0.00      0.00      0.00       500
+            Aspergillus_ustus       0.20      0.00      0.00       550
+           Aspergillus_uvarum       0.26      0.77      0.39      1510
+           Aspergillus_wentii       0.00      0.00      0.00       550
+        Asteromyces_cruciatus       0.09      0.00      0.01       600
+    Aureobasidium_melanogenum       0.08      0.07      0.08       600
+      Aureobasidium_pullulans       0.08      0.00      0.01       600
+     Byssochlamys_spectabilis       0.00      0.00      0.00       600
+                 Cladosporium       0.23      0.32      0.26      1200
+     Cladosporium_delicatulum       0.09      0.02      0.03       600
+     Cladosporium_tenuissimum       0.08      0.04      0.05       600
+         Cladosporium_varians       0.00      0.00      0.00       600
+                   Drechslera       0.19      0.02      0.03       600
+             Epicoccum_nigrum       0.09      0.18      0.12      1200
+          Fusarium_acuminatum       0.06      0.03      0.04       600
+      Fusarium_chlamydosporum       0.10      0.04      0.06       600
+            Fusarium_equiseti       0.20      0.04      0.06       600
+             Fusarium_foetens       0.55      0.25      0.34       600
+          Fusarium_tricinctum       0.13      0.22      0.16      1200
+           Hamigera_avellanea       0.39      0.02      0.04       600
+ Hamigera_avellanea var. alba       0.00      0.00      0.00       600
+           Hypocrea_pulvinata       0.06      0.38      0.11      1190
+           Hypocrea_sulphurea       0.43      0.18      0.25       600
+      Hypocrea_thelephoricola       0.39      0.16      0.22       600
+           Mariannaea_elegans       0.08      0.17      0.11       600
+          Microdochium_nivale       0.15      0.02      0.03       600
+               Monascus_ruber       0.00      0.00      0.00       600
+         Monilinia_fructigena       0.00      0.00      0.00       600
+            Nigrospora_oryzae       0.08      0.42      0.14      1800
+         Paecilomyces_maximus       0.07      0.08      0.08      1460
+         Penicillago_kabunica       0.11      0.02      0.03       600
+        Penicilliopsis_zonata       0.00      0.00      0.00       600
+       Penicillium restrictum       0.33      0.00      0.00       600
+     Penicillium_allii-sativi       0.27      0.31      0.29       600
+      Penicillium_antarcticum       0.38      0.24      0.29       550
+       Penicillium_arizonense       0.21      0.15      0.18       450
+     Penicillium_atramentosum       0.63      0.15      0.25       600
+      Penicillium_brasilianum       0.00      0.00      0.00       600
+       Penicillium_camponotum       0.09      0.00      0.01       550
+        Penicillium_canescens       0.15      0.20      0.17      1200
+      Penicillium_caseifulvum       0.00      0.00      0.00       360
+      Penicillium_chrysogenum       0.45      0.27      0.34       600
+         Penicillium_citrinum       0.16      0.02      0.03       600
+        Penicillium_coprobium       0.00      0.00      0.00       360
+          Penicillium_croceum       0.19      0.02      0.04       600
+       Penicillium_damascenum       0.56      0.02      0.03       600
+             Penicillium_fagi       0.17      0.02      0.04       960
+       Penicillium_flavigenum       0.52      0.19      0.28       600
+      Penicillium_frequentans       0.00      0.00      0.00       360
+          Penicillium_glabrum       0.16      0.21      0.18      1000
+  Penicillium_griseopurpureum       0.00      0.00      0.00       360
+           Penicillium_hordei       0.08      0.03      0.05       600
+      Penicillium_janczewskii       0.11      0.06      0.08      1200
+         Penicillium_jensenii       0.01      0.00      0.00       600
+           Penicillium_krskae       0.00      0.00      0.00       600
+         Penicillium_manginii       0.10      0.02      0.04       600
+  Penicillium_neojanthinellum       0.13      0.51      0.21      2400
+     Penicillium_ochrochloron       0.16      0.20      0.18      1200
+          Penicillium_olsonii       0.22      0.10      0.14       600
+         Penicillium_onobense       0.09      0.25      0.13      1800
+        Penicillium_piscarium       0.30      0.16      0.21       550
+       Penicillium_restrictum       0.19      0.40      0.26      1200
+           Penicillium_ribium       0.26      0.07      0.11       600
+         Penicillium_rotoruae       0.12      0.27      0.17      1800
+            Penicillium_ruben       0.29      0.21      0.24       600
+           Penicillium_rubens       0.35      0.18      0.24       500
+        Penicillium_scabrosum       0.24      0.40      0.30      1200
+           Penicillium_soppii       0.18      0.01      0.02       600
+          Penicillium_steckii       0.24      0.09      0.13       600
+        Penicillium_velutinum       0.00      0.00      0.00       360
+         Penicillium_vulpinum       0.04      0.00      0.00       580
+        Penicillium_waksmanii       0.09      0.02      0.03       600
+           Penicillium_wotroi       0.23      0.16      0.18      1200
+          Pesisa_ostracoderma       0.77      0.24      0.37       600
+            Pezicula_carpinea       0.09      0.10      0.10       600
+              Phoma_americana       0.00      0.00      0.00       600
+             Phoma_epicoccina       0.02      0.01      0.01       600
+              Phoma_glomerata       0.29      0.02      0.03       600
+                Phoma_pomorum       0.08      0.29      0.12      1200
+               Phoma_sorghina       0.41      0.16      0.23       600
+    Purpureocillium_lilacinum       0.15      0.04      0.06      1100
+        Rasamsonia_argillacea       0.20      0.06      0.09       600
+           Rasamsonia_eburnea       0.07      0.03      0.04       600
+          Rasamsonia_piperina       0.00      0.00      0.00       600
+          Rhizomucor_pusillus       0.28      0.57      0.37      1190
+         Rhizopus_microsporus       0.45      0.05      0.09       600
+          Rhizopus_stolonifer       0.35      0.29      0.32       600
+            Sordaria_fimicola       0.18      0.10      0.13       600
+       Stemphylium_vesicarium       0.23      0.09      0.12       600
+       Talaromyces_apiculatus       0.07      0.01      0.01       600
+      Talaromyces_funiculosus       0.14      0.02      0.03       600
+       Thermoascus_verrucosus       0.13      0.08      0.10       600
+                  Trichoderma       0.18      0.01      0.03       600
+       Trichoderma_atroviride       0.00      0.00      0.00       600
+        Trichoderma_harzianum       0.20      0.04      0.07       600
+  Trichoderma_longibrachiatum       0.22      0.06      0.09       600
+         Ulocladium_chartarum       0.40      0.24      0.30       600
+
+                     accuracy                           0.15     84420
+                    macro avg       0.17      0.11      0.10     84420
+                 weighted avg       0.17      0.15      0.12     84420

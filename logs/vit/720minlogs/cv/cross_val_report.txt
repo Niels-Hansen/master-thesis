@@ -1,0 +1,133 @@
+=== Cross-validated Confusion Matrix ===
+[[ 0  0  0 ...  0  0  1]
+ [ 0  0  0 ...  0  0  0]
+ [ 0  0  0 ...  0  0  0]
+ ...
+ [ 0  0  0 ...  0  0  0]
+ [ 0  0  0 ...  0  0 22]
+ [ 0  0  0 ...  0  0 37]]
+
+=== Cross-validated Classification Report ===
+                               precision    recall  f1-score   support
+
+                   Acremonium       0.00      0.00      0.00       240
+        Acremonium_alternatum       0.00      0.00      0.00       240
+          Acremonium_strictum       0.00      0.00      0.00       240
+                   Alternaria       0.00      0.00      0.00       240
+      Arthrinium_phaeospermum       0.00      0.00      0.00       240
+           Ascospirella_lutea       0.00      0.00      0.00       240
+                  Aspergillus       0.00      0.00      0.00       240
+      Aspergillus_aculeatinus       0.00      0.00      0.00       220
+     Aspergillus_arachidicola       0.00      0.00      0.00       240
+      Aspergillus_calidoustus       0.02      0.01      0.01       240
+           Aspergillus_creber       0.00      0.00      0.00       240
+           Aspergillus_flavus       0.03      0.02      0.02       480
+         Aspergillus_lentulus       0.00      0.00      0.00       200
+Aspergillus_minisclerotigenes       0.00      0.00      0.00       240
+    Aspergillus_montevidensis       0.00      0.00      0.00       240
+        Aspergillus_neoglaber       0.04      0.01      0.01       240
+           Aspergillus_nomiae       0.00      0.00      0.00       240
+         Aspergillus_occultus       0.00      0.00      0.00       240
+     Aspergillus_pseudonomiae       0.00      0.00      0.00       240
+         Aspergillus_puniceus       0.00      0.00      0.00       240
+    Aspergillus_thermomutatus       0.00      0.00      0.00       200
+            Aspergillus_ustus       0.00      0.00      0.00       220
+           Aspergillus_uvarum       0.09      0.84      0.17       640
+           Aspergillus_wentii       0.00      0.00      0.00       220
+        Asteromyces_cruciatus       0.00      0.00      0.00       240
+    Aureobasidium_melanogenum       0.00      0.00      0.00       240
+      Aureobasidium_pullulans       0.00      0.00      0.00       240
+     Byssochlamys_spectabilis       0.00      0.00      0.00       240
+                 Cladosporium       0.03      0.04      0.04       480
+     Cladosporium_delicatulum       0.00      0.00      0.00       240
+     Cladosporium_tenuissimum       0.00      0.00      0.00       240
+         Cladosporium_varians       0.00      0.00      0.00       240
+                   Drechslera       0.00      0.00      0.00       240
+             Epicoccum_nigrum       0.00      0.00      0.00       480
+          Fusarium_acuminatum       0.00      0.00      0.00       240
+      Fusarium_chlamydosporum       0.00      0.00      0.00       240
+            Fusarium_equiseti       0.00      0.00      0.00       240
+             Fusarium_foetens       0.00      0.00      0.00       240
+          Fusarium_tricinctum       0.00      0.00      0.00       480
+           Hamigera_avellanea       0.00      0.00      0.00       240
+ Hamigera_avellanea var. alba       0.00      0.00      0.00       240
+           Hypocrea_pulvinata       0.04      0.16      0.07       480
+           Hypocrea_sulphurea       0.00      0.00      0.00       240
+      Hypocrea_thelephoricola       0.00      0.00      0.00       240
+           Mariannaea_elegans       0.00      0.00      0.00       240
+          Microdochium_nivale       0.00      0.00      0.00       240
+               Monascus_ruber       0.00      0.00      0.00       240
+         Monilinia_fructigena       0.00      0.00      0.00       240
+            Nigrospora_oryzae       0.03      0.17      0.06       720
+         Paecilomyces_maximus       0.01      0.01      0.01       620
+         Penicillago_kabunica       0.00      0.00      0.00       240
+        Penicilliopsis_zonata       0.00      0.00      0.00       240
+       Penicillium restrictum       0.00      0.00      0.00       240
+     Penicillium_allii-sativi       0.33      0.01      0.02       240
+      Penicillium_antarcticum       0.00      0.00      0.00       220
+       Penicillium_arizonense       0.00      0.00      0.00       180
+     Penicillium_atramentosum       0.00      0.00      0.00       240
+      Penicillium_brasilianum       0.00      0.00      0.00       240
+       Penicillium_camponotum       0.00      0.00      0.00       220
+        Penicillium_canescens       0.00      0.00      0.00       480
+      Penicillium_caseifulvum       0.00      0.00      0.00       180
+      Penicillium_chrysogenum       0.00      0.00      0.00       240
+         Penicillium_citrinum       0.00      0.00      0.00       240
+        Penicillium_coprobium       0.00      0.00      0.00       180
+          Penicillium_croceum       0.00      0.00      0.00       240
+       Penicillium_damascenum       0.00      0.00      0.00       240
+             Penicillium_fagi       0.00      0.00      0.00       420
+       Penicillium_flavigenum       0.00      0.00      0.00       240
+      Penicillium_frequentans       0.00      0.00      0.00       180
+          Penicillium_glabrum       0.00      0.00      0.00       400
+  Penicillium_griseopurpureum       0.00      0.00      0.00       180
+           Penicillium_hordei       0.00      0.00      0.00       240
+      Penicillium_janczewskii       0.02      0.00      0.01       480
+         Penicillium_jensenii       0.00      0.00      0.00       240
+           Penicillium_krskae       0.00      0.00      0.00       240
+         Penicillium_manginii       0.00      0.00      0.00       240
+  Penicillium_neojanthinellum       0.05      0.73      0.09       960
+     Penicillium_ochrochloron       0.00      0.00      0.00       480
+          Penicillium_olsonii       0.00      0.00      0.00       240
+         Penicillium_onobense       0.01      0.00      0.00       720
+        Penicillium_piscarium       0.08      0.02      0.04       220
+       Penicillium_restrictum       0.04      0.06      0.05       480
+           Penicillium_ribium       0.00      0.00      0.00       240
+         Penicillium_rotoruae       0.03      0.16      0.05       720
+            Penicillium_ruben       0.00      0.00      0.00       240
+           Penicillium_rubens       0.00      0.00      0.00       200
+        Penicillium_scabrosum       0.06      0.05      0.05       480
+           Penicillium_soppii       0.00      0.00      0.00       240
+          Penicillium_steckii       0.00      0.00      0.00       240
+        Penicillium_velutinum       0.00      0.00      0.00       180
+         Penicillium_vulpinum       0.00      0.00      0.00       240
+        Penicillium_waksmanii       0.00      0.00      0.00       240
+           Penicillium_wotroi       0.00      0.00      0.00       480
+          Pesisa_ostracoderma       0.00      0.00      0.00       240
+            Pezicula_carpinea       0.00      0.00      0.00       240
+              Phoma_americana       0.00      0.00      0.00       240
+             Phoma_epicoccina       0.00      0.00      0.00       240
+              Phoma_glomerata       0.00      0.00      0.00       240
+                Phoma_pomorum       0.05      0.02      0.03       480
+               Phoma_sorghina       0.00      0.00      0.00       240
+    Purpureocillium_lilacinum       0.00      0.00      0.00       440
+        Rasamsonia_argillacea       0.00      0.00      0.00       240
+           Rasamsonia_eburnea       0.00      0.00      0.00       240
+          Rasamsonia_piperina       0.00      0.00      0.00       240
+          Rhizomucor_pusillus       0.10      0.16      0.12       480
+         Rhizopus_microsporus       0.00      0.00      0.00       240
+          Rhizopus_stolonifer       0.00      0.00      0.00       240
+            Sordaria_fimicola       0.20      0.07      0.11       240
+       Stemphylium_vesicarium       0.00      0.00      0.00       240
+       Talaromyces_apiculatus       0.00      0.00      0.00       240
+      Talaromyces_funiculosus       0.00      0.00      0.00       240
+       Thermoascus_verrucosus       0.00      0.00      0.00       240
+                  Trichoderma       0.00      0.00      0.00       240
+       Trichoderma_atroviride       0.00      0.00      0.00       240
+        Trichoderma_harzianum       0.00      0.00      0.00       240
+  Trichoderma_longibrachiatum       0.00      0.00      0.00       240
+         Ulocladium_chartarum       0.19      0.15      0.17       240
+
+                     accuracy                           0.05     34080
+                    macro avg       0.01      0.02      0.01     34080
+                 weighted avg       0.02      0.05      0.02     34080
