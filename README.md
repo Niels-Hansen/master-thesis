@@ -31,7 +31,7 @@ pip install -r yolo/requirements.txt
 
 ## Data preparation
 
-Insert the data with subfolders named by IBT CODES.
+Insert the data with subfolders named by IBT numbers.
 ```bash
 <SOURCE_DIR>/
 ├─ IBT_32047/
