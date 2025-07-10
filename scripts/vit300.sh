@@ -13,12 +13,14 @@
 #BSUB -e vit_b_16_%J.err               # Error log
 
 # Load the CUDA module
-module load cuda/11.8
+module load cuda/12.6.3
+python --version
 
-source ../envs/pytorch/bin/activate
+module load python3/3.12.9
 
-pip install --upgrade pip
-pip install -r requirements.txt
+source ../envs/cnn312/bin/activate
+
+pip install -r requirementscnn.txt
 
 
-python main.py --model vit_b_16
+python main.py --model-name "vit_b_16" --source-dir "/work3/s233780/CircularMaskedDataSorted/300min"

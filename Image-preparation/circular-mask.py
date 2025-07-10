@@ -14,7 +14,6 @@ def mask_petri_dish_folder(input_root, output_root, background='black', extensio
             if ext in extensions:
                 input_path = os.path.join(dirpath, filename)
 
-                # Preserve relative path inside output_root
                 rel_path = os.path.relpath(dirpath, input_root)
                 output_dir = os.path.join(output_root, rel_path)
                 os.makedirs(output_dir, exist_ok=True)
@@ -24,7 +23,7 @@ def mask_petri_dish_folder(input_root, output_root, background='black', extensio
 
                 img = cv2.imread(input_path)
                 if img is None:
-                    print(f"⚠️ Skipped unreadable file: {input_path}")
+                    print(f"Skipped unreadable file: {input_path}")
                     continue
 
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -73,9 +72,8 @@ def mask_petri_dish_folder(input_root, output_root, background='black', extensio
     print(f" Not masked (no circle): {unmasked_images}")
 
 
-# Example usage
 mask_petri_dish_folder(
     input_root=r"G:\My Drive\MasterThesis\ResizedDataFixed\IBT_32341",
     output_root=r"G:\My Drive\MasterThesis\Circular\IBT_32341",
-    background="black"  # 'black', 'white', or 'transparent'
+    background="black" 
 )

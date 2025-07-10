@@ -8,7 +8,7 @@ df = pd.read_csv("../image-preparation/class_summarymasked.csv")
 # 2. Extract genus and count occurrences
 df["genus"] = df["Class"].str.split(r'[_ ]', regex=True).str[0]
 genus_occurrences = df["genus"].value_counts().sort_values(ascending=False)
-
+print("Genus occurrences:\n", genus_occurrences.sum())
 # 3. Generate distinct colors using nipy_spectral
 num_genera = len(genus_occurrences)
 cmap = plt.cm.nipy_spectral
@@ -51,4 +51,4 @@ fig.subplots_adjust(top=0.99, bottom=0.01, left=0.01, right=0.78)
 
 # 8. Display and save
 plt.show()
-fig.savefig("genus_occurrences_readable_labels.png", dpi=300)
+fig.savefig("genus_occurrences.png", dpi=300)

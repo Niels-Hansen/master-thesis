@@ -21,9 +21,4 @@ source ../envs/pytorch/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-
-export WANDB_API_KEY=c1c447de3868cec097b64d3641c986cc8a71bcc6
-export WANDB_NAME="YOLOv11"
-export WANDB_NOTES="Smaller learning rate."
-
 python yolo_trainer.py

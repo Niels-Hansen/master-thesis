@@ -39,8 +39,7 @@ class Trainer:
                                  "Class", "Precision", "Recall", "F1-Score", "Support"])
 
     def train(self, full_dataset, k_folds, model_name):
-        #kf = KFold(n_splits=k_folds, shuffle=True, random_state=42)
-        labels = [label for _, label in full_dataset.imgs]  # For stratification
+        labels = [label for _, label in full_dataset.imgs] 
         skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=10)
 
     
@@ -50,10 +49,10 @@ class Trainer:
         all_fold_accuracies = []
         for fold, (train_idx, val_idx) in enumerate(skf.split(full_dataset,labels)):
             print(f"Fold {fold + 1}/{k_folds}")
-            model = self.model_factory.get_model(model_name).to(self.device) # Move model to the appropriate device
+            model = self.model_factory.get_model(model_name).to(self.device) 
 
             criterion = nn.CrossEntropyLoss()
-            optimizer = optim.Adam(model.parameters(), lr=0.001)  # Use Adam optimizer with weight decay
+            optimizer = optim.Adam(model.parameters(), lr=0.001)  
             scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1) 
                        
             train_ds = Subset(
@@ -127,10 +126,10 @@ class Trainer:
                         model.__class__.__name__,
                         fold + 1,
                         epoch,
-                        f"{train_acc:.4f}",            # Accuracy
-                        f"{avg_loss:.4f}",             # Loss
-                        f"{avg_val_loss:.4f}",         # Val Loss
-                        f"{val_acc:.4f}"                   # Val Accuracy
+                        f"{train_acc:.4f}",           
+                        f"{avg_loss:.4f}",             
+                        f"{avg_val_loss:.4f}",        
+                        f"{val_acc:.4f}"                  
                     ])
 
                 df = pd.DataFrame(report_dict).T.reset_index().rename(columns={
@@ -146,10 +145,8 @@ class Trainer:
                 df = df[["Model","Fold","Epoch","Class","Precision","Recall","F1-Score","Support"]]
                 
                 df.to_csv(self.classif_file, mode="a", header=False, index=False)
-                # Save model checkpoint for each epoch
                 epoch_dir = f"/work3/s233780/checkpoints_{model_name}"
                 os.makedirs(epoch_dir, exist_ok=True)
-                # Save model state dict
                 torch.save(
                     model.state_dict(),
                     os.path.join(
@@ -177,10 +174,8 @@ class Trainer:
                 self.logs_dir
             )
 
-            # Record final val accuracy for the fold
             all_fold_accuracies.append(history['val_acc'][-1])
 
-            # Plot learning curves
             plt.figure(figsize=(20, 20))
             plt.plot(range(1, self.num_epochs+1), history['train_loss'], label='Training Loss')
             plt.plot(range(1, self.num_epochs+1), history['val_loss'], label='Validation Loss')
@@ -197,7 +192,6 @@ class Trainer:
             self.tb_writer.close()
             print(f"Model for fold {fold + 1} saved.")
 
-        # Log average accuracy across folds
         avg_acc = sum(all_fold_accuracies) / len(all_fold_accuracies)
         print(f"\nAverage Validation Accuracy Across Folds: {avg_acc:.4f}")
 

@@ -13,12 +13,17 @@
 #BSUB -e resnext_%J.err               # Error log
 
 # Load the CUDA module
-module load cuda/11.8
+module load cuda/12.6.3
+python --version
 
-source ../envs/pytorch/bin/activate
+module load python3/3.12.9
+
+source ../envs/cnn312/bin/activate
+
+python --version
 
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r requirementscnn.txt
 
 
-python main.py --model resnext101_32x8d
+python main.py --model-name "resnext101_32x8d" --source-dir "/work3/s233780/CircularMaskedDataSorted/720min"

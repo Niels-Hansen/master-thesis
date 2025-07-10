@@ -23,4 +23,4 @@ pip install --upgrade pip
 pip install -r requirementscnn.txt
 
 
-python main.py --model-name "efficientnet_v2_s"
+python main.py --model-name "efficientnet_v2_s" --source-dir "/work3/s233780/CircularMaskedDataSorted/300min"

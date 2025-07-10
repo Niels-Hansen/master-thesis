@@ -3,8 +3,10 @@ import random
 import re
 import shutil
 import pandas as pd
-import wandb
+import glob
 from ultralytics import YOLO
+from sklearn.metrics import accuracy_score, f1_score, precision_recall_fscore_support, classification_report
+
 
 class DataSplitter:
 
@@ -14,30 +16,31 @@ class DataSplitter:
         self.output_dir = output_dir
         self.train_dir = os.path.join(output_dir, 'train')
         self.val_dir = os.path.join(output_dir, 'val')
+        self.logs_dir   = os.path.join('media', 'basic_validation', 'yolo11n_fungi_val')
 
-        # Load the mapping from IBT code to genus/species
-        if not os.path.isfile(self.mapping_file):
-            raise FileNotFoundError(f"Mapping file not found: {self.mapping_file}")
-        df_map = pd.read_excel(self.mapping_file)
-        df_map['IBT_code'] = (
-            df_map['IBT number'].astype(str)
-                           .str.replace(' ', '_', regex=False)
-        )
-        df_map = df_map.drop_duplicates(subset='IBT_code', keep='first')
-        self.lookup = df_map.set_index('IBT_code')[['genus','species']].to_dict(orient='index')
+        df = pd.read_excel(self.mapping_file)
+        df['IBT_code'] = df['IBT number'].astype(str).str.replace(' ', '_', regex=False)
 
+        df['genus'] = df['genus'].astype(str).str.strip().str.replace('"', '')
+        df['species'] = df['species'].astype(str).str.strip().str.replace('"', '')
+
+        self.lookup = df.set_index('IBT_code').apply(
+            lambda row: (
+                f"{str(row['genus']).strip()}" if pd.isna(row['species']) or str(row['species']).strip().lower() in ['nan', '']
+                else f"{str(row['genus']).strip()}_{str(row['species']).strip()}"
+            ) if not pd.isna(row['genus']) and str(row['genus']).strip().lower() not in ['nan', '']
+            else '',
+            axis=1
+        ).to_dict()
+                
     def prepare_split(self, split_ratio=0.8):
-        print(f"Preparing data split in '{self.output_dir}'...")
-
-        # Clean existing output directory
+        
         if os.path.exists(self.output_dir):
             shutil.rmtree(self.output_dir)
 
-        # Create train and val directories
         os.makedirs(self.train_dir, exist_ok=True)
         os.makedirs(self.val_dir, exist_ok=True)
 
-        # Iterate through all source images and copy them to train or val
         for folder in os.listdir(self.source_dir):
             folder_path = os.path.join(self.source_dir, folder)
             if not os.path.isdir(folder_path):
@@ -47,7 +50,6 @@ class DataSplitter:
                 if not img_name.lower().endswith(('.jpg', '.jpeg', '.png')):
                     continue
                 
-                # Extract class name from the image file name
                 m = re.match(r"(IBT_\d+)_\d+_([A-Za-z]+)_\d+min", img_name)
                 if not m:
                     continue
@@ -56,23 +58,18 @@ class DataSplitter:
                 if ibt not in self.lookup:
                     continue
                 
-                genus = self.lookup[ibt]['genus']
-                species = self.lookup[ibt]['species']
-                class_name = f"{genus}_{species}"
+                class_name = self.lookup[ibt]
 
-                # Decide if this image goes to train or val
                 destination_base = self.train_dir if random.random() < split_ratio else self.val_dir
                 
-                # Create the class directory inside train/val
                 destination_class_dir = os.path.join(destination_base, class_name)
                 os.makedirs(destination_class_dir, exist_ok=True)
 
-                # Copy the file
                 source_file_path = os.path.join(folder_path, img_name)
                 destination_file_path = os.path.join(destination_class_dir, img_name)
                 shutil.copy(source_file_path, destination_file_path)
 
-        print("Data preparation complete.")
+        print("Data preparation complete")
         print(f"Train data: {self.train_dir}")
         print(f"Validation data: {self.val_dir}")
 
@@ -80,9 +77,9 @@ class DataSplitter:
 if __name__ == '__main__':
 
     source_images_dir = "/work3/s233780/CircularMaskedData"
-    #source_images_dir = r"G:\My Drive\MasterThesisTest\ResizedData"
+    #source_images_dir = r"G:\My Drive\MasterThesisTest\CircularMaskedData"
     mapping_file = "imageAnalysis_info.xlsx"
-    output_dataset_dir = "../fungi_dataset"
+    output_dataset_dir = "/work3/s233780/fungi_dataset"
 
     try:
         splitter = DataSplitter(source_images_dir, mapping_file, output_dataset_dir)
@@ -95,11 +92,11 @@ if __name__ == '__main__':
 
         model = YOLO('yolo11n-cls.pt')
 
-        print("\nStarting model training...")
+        print("Starting training")
         results = model.train(
             data=output_dataset_dir,
             pretrained=True,
-            epochs=20, 
+            epochs=10, 
             imgsz=224,
             batch=128,
             lr0=0.001, 
@@ -114,37 +111,122 @@ if __name__ == '__main__':
             name='yolo11n_fungi',
             plots=True,
             save=True,
+            save_json=True,
             save_period=2,
             device='0', # 0 for GPU, 'cpu' for CPU
         )
-        print("Model training complete.")
+        print("Training complete.")
 
         res = results[0] if isinstance(results, list) else results
         epoch = getattr(res, 'epoch', getattr(res, 'epochs', None))
         train_metrics = getattr(res, 'results_dict', {})
         print(f"Training metrics: {train_metrics}")
-        print("\nRunning final validation…")
-        valm = model.val(save_json=True,
+        print("Running final validation…")
+        valm = model.val(
                          imgsz=224,
-                         batch=64,
+                         batch=128,
                          plots=True,
                          name='yolo11n_fungi_val',
-                         project='runs/basic_validation',
-                         save_txt=True,
+                         project='validation/basic_validation',
+                         save=True,
+                         save_json=True,
                          save_conf=True,
+                         device='0',
                          )
-        
+        val_dir = os.path.join(output_dataset_dir, 'val')
+        val_paths = glob.glob(os.path.join(val_dir, '*', '*.[jp][pn]g'), recursive=True)
         val_top1    = getattr(valm, 'top1', None)
         val_top5    = getattr(valm, 'top5', None)
         val_fitness = getattr(valm, 'fitness', None)
+        def get_media_from_path(path: str) -> str:
+            stem = os.path.splitext(os.path.basename(path))[0]
+            m = re.match(r"(IBT_\d+)_\d+_([A-Za-z]+)_\d+min", stem)
+            return m.group(2).upper() if m else "UNKNOWN"
+        results = model.predict(val_paths, imgsz=224, batch=128, device='0', verbose=False, stream=True)
+        y_pred = [int(r.probs.top1) for r in results]
+        idx2name = model.names
+        name2idx = {n: i for i, n in idx2name.items()}
+        y_true_cls = [os.path.basename(os.path.dirname(p)) for p in val_paths]
+        y_true = [name2idx[c] for c in y_true_cls]
+        
+        df_media = pd.DataFrame({
+            'path':      val_paths,
+            'true':      y_true,
+            'pred':      y_pred,
+            'media':     [get_media_from_path(p) for p in val_paths]
+        })
+        df_media['true_class'] = df_media['true'].map(idx2name)
+        df_media['pred_class'] = df_media['pred'].map(idx2name)
+
+        logs_dir = os.path.join('media', 'yolo11n_fungi_val')
+        os.makedirs(logs_dir, exist_ok=True)
+        fn_img = os.path.join(logs_dir, f"yolo_fold_epoch{epoch}_media_predictions.csv")
+        df_media.to_csv(fn_img, index=False)
+        
+        y_true2 = df_media['true'].tolist()
+        y_pred2 = df_media['pred'].tolist()
+        
+        
+        p_macro, r_macro, f1_macro, _ = precision_recall_fscore_support(y_true, y_pred, average='macro', zero_division=0)
+        p_weighted, r_weighted, f1_weighted, _ = precision_recall_fscore_support(y_true, y_pred, average='weighted', zero_division=0)
+        report = classification_report(
+            y_true, y_pred,
+            target_names=[idx2name[i] for i in sorted(idx2name)],
+            zero_division=0,
+            output_dict=True
+        )
+        df_report = pd.DataFrame(report).transpose()
+        df_report.to_csv(os.path.join(logs_dir, f"classification_report_epoch{epoch}.csv"))
+        print(df_report)
+                
+        
+        summary = []
+        for media, sub in df_media.groupby('media'):
+            acc = accuracy_score(sub['true'], sub['pred'])
+            m_f1 = f1_score(sub['true'], sub['pred'], average='macro', zero_division=0)
+            summary.append({
+                'media':     media,
+                'n_samples': len(sub),
+                'accuracy':  acc,
+                'macro_f1':  m_f1
+            })
+            
+        media_true_counts = df_media.pivot_table(
+            index='media',
+            columns='true_class',
+            values='path',
+            aggfunc='count',
+            fill_value=0
+        )
+
+        media_pred_counts = df_media.pivot_table(
+            index='media',
+            columns='pred_class',
+            values='path',
+            aggfunc='count',
+            fill_value=0
+        )    
+            
+        df_media['correct'] = (df_media['true_class'] == df_media['pred_class']).astype(int)
+        media_acc = df_media.groupby(['media','true_class'])['correct'] \
+                            .mean() \
+                            .unstack(fill_value=0) \
+                            .rename_axis(columns=None)    
+        summary_df = pd.DataFrame(summary).sort_values('accuracy', ascending=False)
+
+        fn_sum = os.path.join(logs_dir, f"yolo_epoch{epoch}_media_summary.csv")
+        summary_df.to_csv(fn_sum, index=False)
+        media_true_counts.to_csv(f"{logs_dir}/media_true_counts.csv")
+        media_pred_counts.to_csv(f"{logs_dir}/media_pred_counts.csv")
+        media_acc.to_csv(f"{logs_dir}/media_class_accuracy.csv")
+
+        print(f"Saved media summary → {fn_sum}")
         row = {
             'timestamp': pd.Timestamp.now(),
             'epoch':     epoch,
-            # training
             'train_top1':       train_metrics.get('metrics/accuracy_top1'),
             'train_top5':       train_metrics.get('metrics/accuracy_top5'),
             'train_fitness':    train_metrics.get('fitness'),
-            # validations
             'val_top1':         val_top1,
             'val_top5':         val_top5,
             'val_fitness':      val_fitness,       
@@ -161,9 +243,7 @@ if __name__ == '__main__':
             'epochs':20, 'imgsz':224, 'batch':64,
             'train_dir': output_dataset_dir
         }
-        wandb.init(project="yolo-trials", config=config)
-        wandb.log({'train_epoch': epoch, **train_metrics,
-                   'val_top1': getattr(valm, 'top1', None)})
+
         
     except Exception as e:
         print(f"An error occurred during model training or validation: {e}")

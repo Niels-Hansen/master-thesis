@@ -13,6 +13,18 @@ class DataLoaderFactory:
         self.source_dir  = source_dir
         self.mapping_file = mapping_file
         self.temp_dir     = temp_dir
+        
+        self.test_transforms = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.RandomRotation(degrees=20),
+            transforms.ColorJitter(brightness=0.2,
+                                   contrast=0.2,
+                                   saturation=0.2,
+                                   hue=0.1),
+            transforms.ToTensor(),
+        ])
     
         self.train_transforms = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -51,7 +63,6 @@ class DataLoaderFactory:
     def prepare_data(self, model_name):
         print(f"--- Starting data preparation for model: {model_name} ---")
 
-        # clean slate
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
         os.makedirs(self.temp_dir, exist_ok=True)
@@ -61,7 +72,6 @@ class DataLoaderFactory:
         class_counts = {}
         print(f"Found {len(self.source_dir)} total items to process.")
 
-        # walk source_dir
         for folder in os.listdir(self.source_dir):
             folder_path = os.path.join(self.source_dir, folder)
             if not os.path.isdir(folder_path):
@@ -76,22 +86,16 @@ class DataLoaderFactory:
                     print(f"Skipping {img}: filename doesn’t match pattern.")
                     continue
 
-                ibt_code = m.group(1)            # e.g. "IBT_23255"
+                ibt_code = m.group(1)            
                 if ibt_code not in self.lookup:
                     print(f"No mapping for {ibt_code}, skipping {img}")
                     continue
-                # media    = m.group(2).upper()    # e.g. "MEA"
 
                 # lookup genus/species
                 if ibt_code not in self.lookup:
                     print(f"No mapping for {ibt_code}, skipping {img}")
                     continue
-                # genus   = self.lookup[ibt_code]['genus']
-                # species = self.lookup[ibt_code]['species']
-            
-
-                # new class folder
-                #class_name = f"{genus}_{species}"
+                
                 class_name = self.lookup[ibt_code]
                 if not class_name or class_name[0] == '':
                     print(f"Skipping {img}: empty class name.")
@@ -122,10 +126,7 @@ class DataLoaderFactory:
         plt.savefig(f"visualizations_{model_name}/class_distribution.png")
         plt.close()
 
-        # return an ImageFolder on the new tree
-          # Create dataset object
-        #dataset = datasets.ImageFolder(self.temp_dir, transform=self.data_transforms)
-        #dataset.classes = classes
-        print("--- Data preparation complete. Returning dataset. ---")
+       
+        print("Data preparation complete")
 
         return self.temp_dir
